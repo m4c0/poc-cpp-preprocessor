@@ -36,8 +36,38 @@ static hai::varray<token> phase_1(const hai::cstr &file) {
 
 static hai::varray<token> phase_2(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
-  for (auto c : t) {
-    res.push_back_doubling(c);
+
+  auto start = 0U;
+  if (t.size() >= 2 && t[0].type == '0xFE' && t[1].type == '0xFF')
+    start = 2U;
+
+  for (auto i = start; i < t.size(); i++) {
+    if (t[i].type != '\\') {
+      res.push_back(t[i]);
+      continue;
+    }
+    token nt{t[i]};
+    for (auto j = i + 1; j < t.size(); j++) {
+      if (t[j].type == t_new_line) {
+        nt.len = 0;
+        i = j + 1;
+        break;
+      }
+      if (t[j].type != ' ' && t[j].type != '\t') {
+        break;
+      }
+    }
+    if (nt.len != 0)
+      res.push_back(nt);
+  }
+
+  if (res.size() > 0 && res[res.size() - 1].type != t_new_line) {
+    const auto &last = res[res.size() - 1];
+    res.push_back(token{
+        .type = t_new_line,
+        .offset = last.offset + last.len,
+        .len = 1,
+    });
   }
   return res;
 }
@@ -88,7 +118,7 @@ static int print_error(const char *err) {
 static int success() { return 0; }
 
 int main() {
-  return yoyo::file_reader::open("poc.cpp") //
+  return yoyo::file_reader::open("example.cpp") //
       .fmap(preprocess_file)
       .map(success)
       .take(print_error);
