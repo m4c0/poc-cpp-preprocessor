@@ -6,11 +6,14 @@ import missingno;
 import traits;
 import yoyo;
 
-enum token_type : int { t_new_line = -1 };
+enum token_type : int {
+  t_null = -2,
+  t_new_line = -1,
+};
 struct token {
   token_type type;
-  unsigned offset;
-  unsigned len;
+  unsigned begin;
+  unsigned end;
 };
 
 static hai::varray<token> phase_1(const hai::cstr &file) {
@@ -19,16 +22,20 @@ static hai::varray<token> phase_1(const hai::cstr &file) {
     switch (auto c = file.data()[i]) {
     case 0xd:
       if (file.data()[i + 1] == 0xa) {
-        res.push_back(token{t_new_line, i, 2});
+        res.push_back(token{.type = t_new_line, .begin = i, .end = i + 1});
         i++;
       } else {
-        res.push_back(token{t_new_line, i, 1});
+        res.push_back(token{.type = t_new_line, .begin = i, .end = i});
       }
       break;
     default:
       // TODO: form translation charset elements
       // https://en.cppreference.com/w/cpp/language/charset#Translation_character_set
-      res.push_back(token{static_cast<token_type>(c), i, 1});
+      res.push_back(token{
+          .type = static_cast<token_type>(c),
+          .begin = i,
+          .end = i,
+      });
     }
   }
   return res;
@@ -49,7 +56,7 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
     token nt{t[i]};
     for (auto j = i + 1; j < t.size(); j++) {
       if (t[j].type == t_new_line) {
-        nt.len = 0;
+        nt.type = t_null;
         i = j + 1;
         break;
       }
@@ -57,7 +64,7 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
         break;
       }
     }
-    if (nt.len != 0)
+    if (nt.type != t_null)
       res.push_back(nt);
   }
 
@@ -65,19 +72,25 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
     const auto &last = res[res.size() - 1];
     res.push_back(token{
         .type = t_new_line,
-        .offset = last.offset + last.len,
-        .len = 1,
+        .begin = last.end + 1,
+        .end = last.end + 1,
     });
   }
   return res;
 }
+
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
-  for (auto c : t) {
-    res.push_back_doubling(c);
+  for (auto i = 0U; i < t.size(); i++) {
+    switch (auto c = t[i].type) {
+    default:
+      res.push_back(t[i]);
+      break;
+    }
   }
   return res;
 }
+
 static hai::varray<token> phase_4(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
   for (auto c : t) {
