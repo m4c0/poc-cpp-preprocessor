@@ -1,37 +1,58 @@
 #pragma leco tool
 #include <stdio.h>
 
+import hai;
 import missingno;
+import traits;
 import yoyo;
 
 struct token {
   char c;
 };
 
-static token phase_1(token t) { return t; }
+static hai::array<char> phase_1(const hai::array<char> &t) {
+  hai::varray<char> res{t.size()};
+  for (auto c : t) {
+    res.push_back_doubling(c);
+  }
+  return res;
+}
+static hai::array<char> phase_2(const hai::array<char> &t) {
+  hai::varray<char> res{t.size()};
+  for (auto c : t) {
+    res.push_back_doubling(c);
+  }
+  return res;
+}
+static hai::array<char> phase_3(const hai::array<char> &t) {
+  hai::varray<char> res{t.size()};
+  for (auto c : t) {
+    res.push_back_doubling(c);
+  }
+  return res;
+}
+static hai::array<char> phase_4(const hai::array<char> &t) {
+  hai::varray<char> res{t.size()};
+  for (auto c : t) {
+    res.push_back_doubling(c);
+  }
+  return res;
+}
 
-static token phase_2(token t) { return t; }
-
-static token phase_3(token t) { return t; }
-
-static token phase_4(token t) { return t; }
-
-static token to_token(char c) { return {c}; }
-static void print_token(token t) { putc(t.c, stdout); }
-
-static bool identity(bool b) { return b; }
+static void print(const hai::array<char> &p) {
+  printf("%*s", p.size(), p.begin());
+}
 
 static mno::req<void> preprocess_file(yoyo::reader &f) {
-  return f.read_s8()
-      .map(to_token)
-      .map(phase_1)
-      .map(phase_2)
-      .map(phase_3)
-      .map(phase_4)
-      .map(print_token) //
-      .fmap([&] { return preprocess_file(f); })
-      .if_failed([&](auto msg) {
-        return f.eof().assert(identity, msg).map([](auto) {});
+  return f.size()
+      .map([](auto sz) { return hai::array<char>{sz}; })
+      .fmap([&](auto &&buf) {
+        return f.read(buf.begin(), buf.size())
+            .map([&] { return phase_1(buf); })
+            .map(phase_2)
+            .map(phase_3)
+            .map(phase_4)
+            .map(print);
       });
 }
 
