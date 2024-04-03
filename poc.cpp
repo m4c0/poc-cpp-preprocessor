@@ -123,7 +123,14 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
 static token comment(token_stream &str, const token &t) {
   token nt = str.peek();
   if (nt.type == '*') {
-    str.skip(1);
+    nt = str.take();
+    while (str.has_more()) {
+      nt = str.take();
+      if (nt.type == '*' && str.peek().type == '/') {
+        nt = str.take();
+        break;
+      }
+    }
   } else if (nt.type == '/') {
     while (str.has_more() && nt.type != t_new_line) {
       nt = str.take();
