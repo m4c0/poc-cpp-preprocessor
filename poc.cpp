@@ -79,14 +79,26 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
   return res;
 }
 
+static token comment(const hai::varray<token> &t, unsigned offset) {
+  auto t1 = t[offset + 1];
+  if (t1.type == '*') {
+    return token{.type = t_null};
+  } else if (t1.type == '/') {
+    return token{.type = t_null};
+  } else {
+    return t[offset];
+  }
+}
+
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
   for (auto i = 0U; i < t.size(); i++) {
-    switch (auto c = t[i].type) {
-    default:
-      res.push_back(t[i]);
-      break;
+    token nt = t[i];
+    if (nt.type == '/') {
+      nt = comment(t, i);
     }
+    if (nt.type != t_null)
+      res.push_back(nt);
   }
   return res;
 }
