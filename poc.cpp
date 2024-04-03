@@ -7,6 +7,7 @@ import traits;
 import yoyo;
 
 enum token_type : int {
+  t_eof = -2,
   t_null = -1,
   t_new_line = '\n',
   t_space = ' ',
@@ -15,6 +16,32 @@ struct token {
   token_type type;
   unsigned begin;
   unsigned end;
+};
+
+class token_stream {
+  const hai::varray<token> &m_tokens;
+  unsigned offset{};
+
+  token eof() const {
+    const auto &last = m_tokens[m_tokens.size() - 1];
+    return token{.type = t_eof, .begin = last.end + 1, .end = last.end + 1};
+  }
+
+public:
+  explicit token_stream(const hai::varray<token> &t) : m_tokens(t) {}
+
+  bool has_more() { return offset < m_tokens.size(); }
+
+  token take() {
+    if (offset >= m_tokens.size())
+      return eof();
+    return m_tokens[offset++];
+  }
+  token peek(unsigned d = 0) const {
+    if (offset + d >= m_tokens.size())
+      return eof();
+    return m_tokens[offset + d];
+  }
 };
 
 // {{{ Phase 1
