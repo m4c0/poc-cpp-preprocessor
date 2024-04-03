@@ -32,6 +32,9 @@ public:
 
   bool has_more() { return offset < m_tokens.size(); }
 
+  void skip(unsigned n) {
+    offset = (offset + n >= m_tokens.size()) ? m_tokens.size() : offset + n;
+  }
   token take() {
     if (offset >= m_tokens.size())
       return eof();
@@ -74,29 +77,33 @@ static hai::varray<token> phase_1(const hai::cstr &file) {
 // {{{ Phase 2
 static hai::varray<token> phase_2(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
+  token_stream str{t};
 
-  auto start = 0U;
-  if (t.size() >= 2 && t[0].type == '0xFE' && t[1].type == '0xFF')
-    start = 2U;
+  if (str.peek(0).type == 0xFE && str.peek(1).type == 0xFF) {
+    str.take();
+    str.take();
+  }
 
-  for (auto i = start; i < t.size(); i++) {
-    if (t[i].type != '\\') {
-      res.push_back(t[i]);
+  while (str.has_more()) {
+    token t = str.take();
+    if (t.type != '\\') {
+      res.push_back(t);
       continue;
     }
-    token nt{t[i]};
-    for (auto j = i + 1; j < t.size(); j++) {
-      if (t[j].type == t_new_line) {
-        nt.type = t_null;
-        i = j + 1;
+    unsigned la = 0;
+    while (str.peek(la).type != t_eof) {
+      auto nt = str.peek(la);
+      if (nt.type == t_new_line)
         break;
-      }
-      if (t[j].type != ' ' && t[j].type != '\t') {
+      if (nt.type != ' ' && nt.type != '\t')
         break;
-      }
+      la++;
     }
-    if (nt.type != t_null)
-      res.push_back(nt);
+    if (str.peek(la).type == t_new_line) {
+      str.skip(la + 1);
+    } else {
+      res.push_back(t);
+    }
   }
 
   if (res.size() > 0 && res[res.size() - 1].type != t_new_line) {
