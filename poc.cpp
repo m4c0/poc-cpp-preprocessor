@@ -121,31 +121,28 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
 // }}}
 
 // {{{ Phase 3
-static token comment(const hai::varray<token> &t, unsigned offset) {
-  auto t1 = t[offset + 1];
-  if (t1.type == '*') {
-    return token{.type = t_null};
-  } else if (t1.type == '/') {
-    unsigned end;
-    for (end = offset + 1; end < t.size(); end++) {
-      if (t[end].type == t_new_line)
-        break;
-    }
-    return token{.type = t_space, .begin = offset, .end = end};
+static token comment(token_stream &str, const token &t) {
+  token nt = str.peek();
+  if (nt.type == '*') {
+    str.take();
+  } else if (nt.type == '/') {
+    str.take();
   } else {
-    return t[offset];
+    return t;
   }
+  return token{.type = t_space, .begin = t.begin, .end = nt.end};
 }
 
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
-  for (auto i = 0U; i < t.size(); i++) {
-    token nt = t[i];
-    if (nt.type == '/') {
-      nt = comment(t, i);
+  token_stream str{t};
+  while (str.has_more()) {
+    token t = str.take();
+    if (t.type == '/') {
+      res.push_back(comment(str, t));
+    } else {
+      res.push_back(t);
     }
-    if (nt.type != t_null)
-      res.push_back(nt);
   }
   return res;
 }
