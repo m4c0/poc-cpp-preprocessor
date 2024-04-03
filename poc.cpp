@@ -36,12 +36,12 @@ public:
   void skip(unsigned n) {
     offset = (offset + n >= m_tokens.size()) ? m_tokens.size() : offset + n;
   }
-  token take() {
+  [[nodiscard]] token take() {
     if (offset >= m_tokens.size())
       return eof();
     return m_tokens[offset++];
   }
-  token peek(unsigned d = 0) const {
+  [[nodiscard]] token peek(unsigned d = 0) const {
     if (offset + d >= m_tokens.size())
       return eof();
     return m_tokens[offset + d];
@@ -82,8 +82,7 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
   token_stream str{t};
 
   if (str.peek(0).type == 0xFE && str.peek(1).type == 0xFF) {
-    str.take();
-    str.take();
+    str.skip(2);
   }
 
   while (str.has_more()) {
@@ -124,7 +123,7 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
 static token comment(token_stream &str, const token &t) {
   token nt = str.peek();
   if (nt.type == '*') {
-    str.take();
+    str.skip(1);
   } else if (nt.type == '/') {
     while (str.has_more() && nt.type != t_new_line) {
       nt = str.take();
