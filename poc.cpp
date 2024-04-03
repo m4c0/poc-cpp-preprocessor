@@ -85,7 +85,12 @@ static token comment(const hai::varray<token> &t, unsigned offset) {
   if (t1.type == '*') {
     return token{.type = t_null};
   } else if (t1.type == '/') {
-    return token{.type = t_null};
+    unsigned end;
+    for (end = offset + 1; end < t.size(); end++) {
+      if (t[end].type == t_new_line)
+        break;
+    }
+    return token{.type = t_space, .begin = offset, .end = end};
   } else {
     return t[offset];
   }
