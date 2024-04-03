@@ -17,6 +17,7 @@ struct token {
   unsigned end;
 };
 
+// {{{ Phase 1
 static hai::varray<token> phase_1(const hai::cstr &file) {
   hai::varray<token> res{file.size()};
   for (auto i = 0U; i < file.size(); i++) {
@@ -41,7 +42,9 @@ static hai::varray<token> phase_1(const hai::cstr &file) {
   }
   return res;
 }
+// }}}
 
+// {{{ Phase 2
 static hai::varray<token> phase_2(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
 
@@ -79,7 +82,9 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
   }
   return res;
 }
+// }}}
 
+// {{{ Phase 3
 static token comment(const hai::varray<token> &t, unsigned offset) {
   auto t1 = t[offset + 1];
   if (t1.type == '*') {
@@ -108,7 +113,9 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
   }
   return res;
 }
+// }}}
 
+// {{{ Phase 4
 static hai::varray<token> phase_4(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
   for (auto c : t) {
@@ -116,7 +123,9 @@ static hai::varray<token> phase_4(const hai::varray<token> &t) {
   }
   return res;
 }
+// }}}
 
+// {{{ Read-Eval-Print
 static void print(const hai::varray<token> &tokens) {
   for (auto t : tokens) {
     putc(t.type, stdout);
@@ -141,6 +150,7 @@ static int print_error(const char *err) {
   return 1;
 }
 static int success() { return 0; }
+// }}}
 
 int main() {
   return yoyo::file_reader::open("example.cpp") //
