@@ -7,8 +7,9 @@ import traits;
 import yoyo;
 
 enum token_type : int {
-  t_null = -2,
-  t_new_line = -1,
+  t_null = -1,
+  t_new_line = '\n',
+  t_space = ' ',
 };
 struct token {
   token_type type;
@@ -113,13 +114,7 @@ static hai::varray<token> phase_4(const hai::varray<token> &t) {
 
 static void print(const hai::varray<token> &tokens) {
   for (auto t : tokens) {
-    switch (t.type) {
-    case t_new_line:
-      putc('\n', stdout);
-      break;
-    default:
-      printf("%c", t.type);
-    }
+    putc(t.type, stdout);
   }
 }
 
