@@ -126,7 +126,9 @@ static token comment(token_stream &str, const token &t) {
   if (nt.type == '*') {
     str.take();
   } else if (nt.type == '/') {
-    str.take();
+    while (str.has_more() && nt.type != t_new_line) {
+      nt = str.take();
+    }
   } else {
     return t;
   }
