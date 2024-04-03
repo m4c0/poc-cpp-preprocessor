@@ -18,6 +18,7 @@ struct token {
   unsigned end;
 };
 
+// {{{ Token Stream
 class token_stream {
   const hai::varray<token> &m_tokens;
   unsigned offset{};
@@ -46,6 +47,7 @@ public:
     return m_tokens[offset + d];
   }
 };
+// }}}
 
 // {{{ Phase 1
 static hai::varray<token> phase_1(const hai::cstr &file) {
