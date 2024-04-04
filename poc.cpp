@@ -275,21 +275,21 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
     if (str.matches("export")) {
       token t = str.peek();
       t.type = t_export;
-      t.end = t.begin + 6;
+      t.end = t.begin + 5;
       str.skip(6);
       res.push_back(t);
     }
     if (str.matches("import")) {
       token t = str.peek();
       t.type = t_import;
-      t.end = t.begin + 6;
+      t.end = t.begin + 5;
       str.skip(6);
       res.push_back(t);
     }
     if (str.matches("module")) {
       token t = str.peek();
       t.type = t_module;
-      t.end = t.begin + 6;
+      t.end = t.begin + 5;
       str.skip(6);
       res.push_back(t);
     }
@@ -412,7 +412,7 @@ static int print_error(const char *err) {
 // }}}
 
 int main() {
-  return slurp("example.cpp") //
+  return slurp("tests/example.cpp") //
       .map(preprocess_file)
       .take(print_error);
 }

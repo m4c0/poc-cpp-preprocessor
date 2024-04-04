@@ -5,14 +5,25 @@ int main(){}
 #if 1
 )";
 #endif
+
 /* Plz edit me with
  vim --clean example.cpp
  */
 //  then use :set nofixendofline to
 //keep the file without a final line end
+
 #if 0
   also remember to keep fileformat=dos for extra fun
 #endif
+
+module;
+export module abacabb;
+import test;
+export import <abs>;
+
+# define A "nog.h"
+# include A
+
 #define loop   \   
 	do {    \
 	} while (true);
