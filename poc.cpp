@@ -7,6 +7,7 @@ import traits;
 import yoyo;
 
 enum token_type : int {
+  t_char = -4,
   t_identifier = -3,
   t_eof = -2,
   t_null = -1,
@@ -143,6 +144,9 @@ static bool is_ident(const token &t) {
 static bool is_non_nl_space(const token &t) {
   return t.type == ' ' || t.type == '\t'; // TODO: unicode space, etc
 }
+static bool is_type_modifier(const token &t) {
+  return t.type == 'u' || t.type == 'U' || t.type == 'L';
+}
 
 static token comment(token_stream &str, const token &t) { // {{{
   token nt = str.peek();
@@ -178,6 +182,13 @@ static token non_nl_space(token_stream &str, const token &t) { // {{{
   }
   return token{.type = t_space, .begin = t.begin, .end = nt.end};
 } // }}}
+static token char_literal(token_stream &str, const token &t) { // {{{
+  token nt = str.take();
+  while (str.has_more() && nt.type != '\'' && nt.type != t_new_line) {
+    nt = str.take();
+  }
+  return token{.type = t_char, .begin = t.begin, .end = nt.end};
+} // }}}
 
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
@@ -186,6 +197,15 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
     token t = str.take();
     if (t.type == '/') {
       res.push_back(comment(str, t));
+    } else if (t.type == '\'') {
+      res.push_back(char_literal(str, t));
+    } else if (t.type == 'u' && str.peek().type == '8' &&
+               str.peek(1).type == '\'') {
+      str.skip(2);
+      res.push_back(char_literal(str, t));
+    } else if (is_type_modifier(t) && str.peek().type == '\'') {
+      str.skip(1);
+      res.push_back(char_literal(str, t));
     } else if (is_non_nl_space(t)) {
       res.push_back(non_nl_space(str, t));
     } else if (is_ident_start(t)) {

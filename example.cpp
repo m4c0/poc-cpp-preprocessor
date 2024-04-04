@@ -18,6 +18,7 @@ int main(){}
 	} while (true);
 
 int main(int argc, char ** argv) {
+	chars('a', u'8', u8'0', L'1');
 	puts("I'm \\ " \\
 
 			" a "
