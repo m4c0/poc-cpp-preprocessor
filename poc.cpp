@@ -7,6 +7,7 @@ import traits;
 import yoyo;
 
 enum token_type : int {
+  t_str = -5,
   t_char = -4,
   t_identifier = -3,
   t_eof = -2,
@@ -189,6 +190,13 @@ static token char_literal(token_stream &str, const token &t) { // {{{
   }
   return token{.type = t_char, .begin = t.begin, .end = nt.end};
 } // }}}
+static token str_literal(token_stream &str, const token &t) { // {{{
+  token nt = str.take();
+  while (str.has_more() && nt.type != '"' && nt.type != t_new_line) {
+    nt = str.take();
+  }
+  return token{.type = t_str, .begin = t.begin, .end = nt.end};
+} // }}}
 
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
@@ -206,6 +214,15 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
     } else if (is_type_modifier(t) && str.peek().type == '\'') {
       str.skip(1);
       res.push_back(char_literal(str, t));
+    } else if (t.type == '"') {
+      res.push_back(str_literal(str, t));
+    } else if (t.type == 'u' && str.peek().type == '8' &&
+               str.peek(1).type == '"') {
+      str.skip(2);
+      res.push_back(str_literal(str, t));
+    } else if (is_type_modifier(t) && str.peek().type == '"') {
+      str.skip(1);
+      res.push_back(str_literal(str, t));
     } else if (is_non_nl_space(t)) {
       res.push_back(non_nl_space(str, t));
     } else if (is_ident_start(t)) {
