@@ -7,6 +7,7 @@ import traits;
 import yoyo;
 
 enum token_type : int {
+  t_raw_str = -6,
   t_str = -5,
   t_char = -4,
   t_identifier = -3,
@@ -197,6 +198,18 @@ static token str_literal(token_stream &str, const token &t) { // {{{
   }
   return token{.type = t_str, .begin = t.begin, .end = nt.end};
 } // }}}
+static token raw_str_literal(token_stream &str, const token &t) { // {{{
+  token nt = str.take();
+  if (nt.type != '(')
+    throw R"TBD(TBD)TBD";
+
+  while (str.has_more() && !(nt.type == ')' && str.peek().type == '"')) {
+    nt = str.take();
+  }
+
+  nt = str.take(); // takes "
+  return token{.type = t_raw_str, .begin = t.begin, .end = nt.end};
+} // }}}
 
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
@@ -235,6 +248,24 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
     if (is_type_modifier(t) && str.peek().type == '"') {
       str.skip(1);
       res.push_back(str_literal(str, t));
+      continue;
+    }
+
+    if (t.type == 'R' && str.peek().type == '"') {
+      str.skip(1);
+      res.push_back(raw_str_literal(str, t));
+      continue;
+    }
+    if (t.type == 'u' && str.peek().type == '8' && str.peek(1).type == 'R' &&
+        str.peek(2).type == '"') {
+      str.skip(3);
+      res.push_back(raw_str_literal(str, t));
+      continue;
+    }
+    if (is_type_modifier(t) && str.peek().type == 'R' &&
+        str.peek(1).type == '"') {
+      str.skip(2);
+      res.push_back(raw_str_literal(str, t));
       continue;
     }
 
