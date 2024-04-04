@@ -197,16 +197,20 @@ static hai::varray<token> phase_4(const hai::varray<token> &t) {
 // }}}
 
 // {{{ Read-Eval-Print
-static auto preprocess_file(yoyo::reader &f) {
-  return f.size()
-      .map([](auto sz) { return hai::cstr{sz}; })
-      .fmap([&](auto &&buf) {
-        return f.read(buf.begin(), buf.size())
-            .map([&] { return phase_1(buf); })
-            .map(phase_2)
-            .map(phase_3)
-            .map(phase_4);
+static mno::req<hai::cstr> slurp(const char *name) {
+  return yoyo::file_reader::open(name) //
+      .fmap([](auto &f) {
+        return f.size()
+            .map([](auto sz) { return hai::cstr{sz}; })
+            .fmap([&](auto &&buf) {
+              return f.read(buf.data(), buf.size()).map([&] {
+                return traits::move(buf);
+              });
+            });
       });
+}
+static hai::varray<token> preprocess_file(const hai::cstr &buf) {
+  return phase_4(phase_3(phase_2(phase_1(buf))));
 }
 
 static int print_error(const char *err) {
@@ -215,6 +219,7 @@ static int print_error(const char *err) {
 }
 static int success(const hai::varray<token> &tokens) {
   for (auto t : tokens) {
+    // putc(t.type, stdout);
     printf("%3d %5d %5d\n", t.type, t.begin, t.end);
   }
   return 0;
@@ -222,8 +227,8 @@ static int success(const hai::varray<token> &tokens) {
 // }}}
 
 int main() {
-  return yoyo::file_reader::open("example.cpp") //
-      .fmap(preprocess_file)
+  return slurp("example.cpp")
+      .map(preprocess_file)
       .map(success)
       .take(print_error);
 }
