@@ -1,3 +1,10 @@
+#if A
+auto x = R"(
+#endif
+int main(){}
+#if 1
+)";
+#endif
 /* Plz edit me with
  vim --clean example.cpp
  */
