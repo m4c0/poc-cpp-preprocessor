@@ -375,8 +375,9 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
 // {{{ Phase 4
 static hai::varray<token> phase_4(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
-  for (auto c : t) {
-    res.push_back_doubling(c);
+  token_stream str{t};
+  while (str.has_more()) {
+    res.push_back_doubling(str.take());
   }
   return res;
 }
