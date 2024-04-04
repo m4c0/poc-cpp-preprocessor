@@ -124,6 +124,9 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
 // }}}
 
 // {{{ Phase 3
+static token identifier(token_stream &str, const token &t);
+
+// {{{ Utils
 static bool is_ident_start(const token &t) {
   char c = t.type;
   if (c >= 'A' && c <= 'Z')
@@ -149,6 +152,14 @@ static bool is_non_nl_space(const token &t) {
 static bool is_type_modifier(const token &t) {
   return t.type == 'u' || t.type == 'U' || t.type == 'L';
 }
+static token ud_suffix(token_stream &str, const token &t) {
+  if (str.peek().type == '_' && is_ident_start(str.peek(1))) {
+    str.skip(1);
+    return identifier(str, str.take());
+  }
+  return t;
+}
+// }}}
 
 static token comment(token_stream &str, const token &t) { // {{{
   token nt = str.peek();
@@ -189,6 +200,7 @@ static token char_literal(token_stream &str, const token &t) { // {{{
   while (str.has_more() && nt.type != '\'' && nt.type != t_new_line) {
     nt = str.take();
   }
+  nt = ud_suffix(str, nt);
   return token{.type = t_char, .begin = t.begin, .end = nt.end};
 } // }}}
 static token str_literal(token_stream &str, const token &t) { // {{{
@@ -196,6 +208,7 @@ static token str_literal(token_stream &str, const token &t) { // {{{
   while (str.has_more() && nt.type != '"' && nt.type != t_new_line) {
     nt = str.take();
   }
+  nt = ud_suffix(str, nt);
   return token{.type = t_str, .begin = t.begin, .end = nt.end};
 } // }}}
 static token raw_str_literal(token_stream &str, const token &t) { // {{{
@@ -208,6 +221,7 @@ static token raw_str_literal(token_stream &str, const token &t) { // {{{
   }
 
   nt = str.take(); // takes "
+  nt = ud_suffix(str, nt);
   return token{.type = t_raw_str, .begin = t.begin, .end = nt.end};
 } // }}}
 

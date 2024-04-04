@@ -16,10 +16,11 @@ int main(){}
 #define loop   \   
 	do {    \
 	} while (true);
+auto x = 0.3_eee + 1e123 * 10 / .1 + 0.;
 
 int main(int argc, char ** argv) {
-	chars('a', u'8', u8'0', L'1');
-	puts("I'm \\ " \\
+	chars('a', u'8', u8'0', L'1'_abs);
+	puts("I'm \\ "_sups \\
 
 			" a "
 			"valid" 
