@@ -7,6 +7,7 @@ import traits;
 import yoyo;
 
 enum token_type : int {
+  t_identifier = -3,
   t_eof = -2,
   t_null = -1,
   t_new_line = '\n',
@@ -120,6 +121,26 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
 // }}}
 
 // {{{ Phase 3
+static bool is_ident_start(const token &t) {
+  char c = t.type;
+  if (c >= 'A' && c <= 'Z')
+    return true;
+  if (c >= 'a' && c <= 'z')
+    return true;
+  if (c == '_')
+    return true;
+
+  return false;
+}
+static bool is_ident(const token &t) {
+  if (is_ident_start(t))
+    return true;
+  if (t.type >= '0' && t.type <= '9')
+    return true;
+
+  return false;
+}
+
 static token comment(token_stream &str, const token &t) {
   token nt = str.peek();
   if (nt.type == '*') {
@@ -140,6 +161,13 @@ static token comment(token_stream &str, const token &t) {
   }
   return token{.type = t_space, .begin = t.begin, .end = nt.end};
 }
+static token identifier(token_stream &str, const token &t) {
+  token nt = t;
+  while (is_ident(str.peek())) {
+    nt = str.take();
+  }
+  return token{.type = t_identifier, .begin = t.begin, .end = nt.end};
+}
 
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
@@ -148,6 +176,8 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
     token t = str.take();
     if (t.type == '/') {
       res.push_back(comment(str, t));
+    } else if (is_ident_start(t)) {
+      res.push_back(identifier(str, t));
     } else {
       res.push_back(t);
     }
