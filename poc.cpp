@@ -209,26 +209,24 @@ static mno::req<hai::cstr> slurp(const char *name) {
             });
       });
 }
-static hai::varray<token> preprocess_file(const hai::cstr &buf) {
-  return phase_4(phase_3(phase_2(phase_1(buf))));
+static int preprocess_file(const hai::cstr &buf) {
+  auto tokens = phase_4(phase_3(phase_2(phase_1(buf))));
+
+  for (auto t : tokens) {
+    // printf("%3d %5d %5d\n", t.type, t.begin, t.end);
+    printf("[%.*s]", (t.end - t.begin + 1), buf.begin() + t.begin);
+  }
+  return 0;
 }
 
 static int print_error(const char *err) {
   fprintf(stderr, "%s", err);
   return 1;
 }
-static int success(const hai::varray<token> &tokens) {
-  for (auto t : tokens) {
-    // putc(t.type, stdout);
-    printf("%3d %5d %5d\n", t.type, t.begin, t.end);
-  }
-  return 0;
-}
 // }}}
 
 int main() {
   return slurp("example.cpp")
       .map(preprocess_file)
-      .map(success)
       .take(print_error);
 }
