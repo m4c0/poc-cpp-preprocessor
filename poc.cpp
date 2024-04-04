@@ -7,6 +7,7 @@ import traits;
 import yoyo;
 
 enum token_type : int {
+  t_pp_number = -7,
   t_raw_str = -6,
   t_str = -5,
   t_char = -4,
@@ -127,6 +128,9 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
 static token identifier(token_stream &str, const token &t);
 
 // {{{ Utils
+static bool is_digit(const token &t) {
+  return t.type >= '0' && t.type <= '9';
+}
 static bool is_ident_start(const token &t) {
   char c = t.type;
   if (c >= 'A' && c <= 'Z')
@@ -139,18 +143,16 @@ static bool is_ident_start(const token &t) {
   return false;
 }
 static bool is_ident(const token &t) {
-  if (is_ident_start(t))
-    return true;
-  if (t.type >= '0' && t.type <= '9')
-    return true;
-
-  return false;
+  return is_ident_start(t) || is_digit(t);
 }
 static bool is_non_nl_space(const token &t) {
   return t.type == ' ' || t.type == '\t'; // TODO: unicode space, etc
 }
 static bool is_type_modifier(const token &t) {
   return t.type == 'u' || t.type == 'U' || t.type == 'L';
+}
+static bool is_sign(const token &t) {
+  return t.type == '+' || t.type == '-';
 }
 static token ud_suffix(token_stream &str, const token &t) {
   if (str.peek().type == '_' && is_ident_start(str.peek(1))) {
@@ -224,6 +226,36 @@ static token raw_str_literal(token_stream &str, const token &t) { // {{{
   nt = ud_suffix(str, nt);
   return token{.type = t_raw_str, .begin = t.begin, .end = nt.end};
 } // }}}
+static token pp_number(token_stream &str, const token &t) { // {{{
+  token nt = t;
+  while (str.has_more()) {
+    auto tt = str.peek();
+    if (is_ident(tt)) {
+      nt = str.take();
+      continue;
+    }
+    auto ttt = str.peek(1);
+    if (tt.type == '\'' && (is_digit(ttt) || is_ident_start(ttt))) {
+      str.skip(1);
+      nt = str.take();
+      continue;
+    }
+    if ((tt.type == 'e' || tt.type == 'E' || tt.type == 'p' ||
+         tt.type == 'P') &&
+        is_sign(ttt)) {
+      str.skip(1);
+      nt = str.take();
+      continue;
+    }
+    if (tt.type == '.') {
+      nt = str.take();
+      continue;
+    }
+
+    break;
+  }
+  return token{.type = t_pp_number, .begin = t.begin, .end = nt.end};
+} // }}}
 
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
@@ -232,6 +264,15 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
     token t = str.take();
     if (t.type == '/') {
       res.push_back(comment(str, t));
+      continue;
+    }
+
+    if (is_digit(t)) {
+      res.push_back(pp_number(str, t));
+      continue;
+    }
+    if (t.type == '.' && is_digit(str.peek())) {
+      res.push_back(pp_number(str, t));
       continue;
     }
 
