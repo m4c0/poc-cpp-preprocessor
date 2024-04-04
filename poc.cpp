@@ -205,31 +205,49 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
     token t = str.take();
     if (t.type == '/') {
       res.push_back(comment(str, t));
-    } else if (t.type == '\'') {
-      res.push_back(char_literal(str, t));
-    } else if (t.type == 'u' && str.peek().type == '8' &&
-               str.peek(1).type == '\'') {
-      str.skip(2);
-      res.push_back(char_literal(str, t));
-    } else if (is_type_modifier(t) && str.peek().type == '\'') {
-      str.skip(1);
-      res.push_back(char_literal(str, t));
-    } else if (t.type == '"') {
-      res.push_back(str_literal(str, t));
-    } else if (t.type == 'u' && str.peek().type == '8' &&
-               str.peek(1).type == '"') {
-      str.skip(2);
-      res.push_back(str_literal(str, t));
-    } else if (is_type_modifier(t) && str.peek().type == '"') {
-      str.skip(1);
-      res.push_back(str_literal(str, t));
-    } else if (is_non_nl_space(t)) {
-      res.push_back(non_nl_space(str, t));
-    } else if (is_ident_start(t)) {
-      res.push_back(identifier(str, t));
-    } else {
-      res.push_back(t);
+      continue;
     }
+
+    if (t.type == '\'') {
+      res.push_back(char_literal(str, t));
+      continue;
+    }
+    if (t.type == 'u' && str.peek().type == '8' && str.peek(1).type == '\'') {
+      str.skip(2);
+      res.push_back(char_literal(str, t));
+      continue;
+    }
+    if (is_type_modifier(t) && str.peek().type == '\'') {
+      str.skip(1);
+      res.push_back(char_literal(str, t));
+      continue;
+    }
+
+    if (t.type == '"') {
+      res.push_back(str_literal(str, t));
+      continue;
+    }
+    if (t.type == 'u' && str.peek().type == '8' && str.peek(1).type == '"') {
+      str.skip(2);
+      res.push_back(str_literal(str, t));
+      continue;
+    }
+    if (is_type_modifier(t) && str.peek().type == '"') {
+      str.skip(1);
+      res.push_back(str_literal(str, t));
+      continue;
+    }
+
+    if (is_non_nl_space(t)) {
+      res.push_back(non_nl_space(str, t));
+      continue;
+    }
+    if (is_ident_start(t)) {
+      res.push_back(identifier(str, t));
+      continue;
+    }
+
+      res.push_back(t);
   }
   return res;
 }
