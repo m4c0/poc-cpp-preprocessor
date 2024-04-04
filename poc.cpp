@@ -197,13 +197,7 @@ static hai::varray<token> phase_4(const hai::varray<token> &t) {
 // }}}
 
 // {{{ Read-Eval-Print
-static void print(const hai::varray<token> &tokens) {
-  for (auto t : tokens) {
-    putc(t.type, stdout);
-  }
-}
-
-static mno::req<void> preprocess_file(yoyo::reader &f) {
+static auto preprocess_file(yoyo::reader &f) {
   return f.size()
       .map([](auto sz) { return hai::cstr{sz}; })
       .fmap([&](auto &&buf) {
@@ -211,8 +205,7 @@ static mno::req<void> preprocess_file(yoyo::reader &f) {
             .map([&] { return phase_1(buf); })
             .map(phase_2)
             .map(phase_3)
-            .map(phase_4)
-            .map(print);
+            .map(phase_4);
       });
 }
 
@@ -220,7 +213,12 @@ static int print_error(const char *err) {
   fprintf(stderr, "%s", err);
   return 1;
 }
-static int success() { return 0; }
+static int success(const hai::varray<token> &tokens) {
+  for (auto t : tokens) {
+    printf("%3d %5d %5d\n", t.type, t.begin, t.end);
+  }
+  return 0;
+}
 // }}}
 
 int main() {
