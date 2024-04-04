@@ -278,7 +278,7 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
       continue;
     }
 
-      res.push_back(t);
+    res.push_back(t);
   }
   return res;
 }
@@ -324,7 +324,7 @@ static int print_error(const char *err) {
 // }}}
 
 int main() {
-  return slurp("example.cpp")
+  return slurp("example.cpp") //
       .map(preprocess_file)
       .take(print_error);
 }
