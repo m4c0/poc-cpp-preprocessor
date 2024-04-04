@@ -373,11 +373,35 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
 // }}}
 
 // {{{ Phase 4
+static void consume_space(token_stream &str) {
+  while (str.peek().type == t_space) {
+    str.skip(1);
+  }
+}
+
 static hai::varray<token> phase_4(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
   token_stream str{t};
   while (str.has_more()) {
-    res.push_back_doubling(str.take());
+    consume_space(str);
+
+    auto t = str.take();
+    if (t.type == '#') {
+      consume_space(str);
+
+      auto nt = t;
+      while (str.has_more() && nt.type != t_new_line) {
+        nt = str.take();
+      }
+      t.end = nt.end;
+      res.push_back(t);
+    } else {
+      res.push_back(t);
+      while (str.has_more() && t.type != t_new_line) {
+        t = str.take();
+        res.push_back(t);
+      }
+    }
   }
   return res;
 }
