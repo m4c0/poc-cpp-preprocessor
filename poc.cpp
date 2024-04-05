@@ -55,7 +55,7 @@ public:
     return m_tokens[offset + d];
   }
 
-  [[nodiscard]] bool matches(const char * txt) const {
+  [[nodiscard]] bool matches(const char *txt) const {
     for (auto i = 0; txt[i] != 0; i++) {
       if (peek(i).type != txt[i])
         return false;
@@ -139,9 +139,7 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
 static token identifier(token_stream &str, const token &t);
 
 // {{{ Utils
-static bool is_digit(const token &t) {
-  return t.type >= '0' && t.type <= '9';
-}
+static bool is_digit(const token &t) { return t.type >= '0' && t.type <= '9'; }
 static bool is_ident_start(const token &t) {
   char c = t.type;
   if (c >= 'A' && c <= 'Z')
@@ -162,9 +160,7 @@ static bool is_non_nl_space(const token &t) {
 static bool is_type_modifier(const token &t) {
   return t.type == 'u' || t.type == 'U' || t.type == 'L';
 }
-static bool is_sign(const token &t) {
-  return t.type == '+' || t.type == '-';
-}
+static bool is_sign(const token &t) { return t.type == '+' || t.type == '-'; }
 static token ud_suffix(token_stream &str, const token &t) {
   if (str.peek().type == '_' && is_ident_start(str.peek(1))) {
     str.skip(1);
