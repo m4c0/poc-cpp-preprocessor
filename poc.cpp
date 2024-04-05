@@ -391,12 +391,19 @@ static hai::varray<token> phase_4(const hai::varray<token> &t) {
       }
       t.end = nt.end;
       res.push_back(t);
-    } else {
+      continue;
+    }
+    if (t.type == t_import) {
+      consume_space(str);
+      continue;
+    } else if (t.type == t_module) {
+      consume_space(str);
+      continue;
+    }
+    res.push_back(t);
+    while (str.has_more() && t.type != t_new_line) {
+      t = str.take();
       res.push_back(t);
-      while (str.has_more() && t.type != t_new_line) {
-        t = str.take();
-        res.push_back(t);
-      }
     }
   }
   return res;
