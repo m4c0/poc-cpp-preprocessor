@@ -1,10 +1,9 @@
 #pragma leco tool
-#include <stdio.h>
-
 import hai;
+import jojo;
 import missingno;
+import print;
 import traits;
-import yoyo;
 
 enum token_type : int {
   t_export = -10,
@@ -410,37 +409,14 @@ static hai::varray<token> phase_4(const hai::varray<token> &t) {
 }
 // }}}
 
-// {{{ Read-Eval-Print
-static mno::req<hai::cstr> slurp(const char *name) {
-  return yoyo::file_reader::open(name) //
-      .fmap([](auto &f) {
-        return f.size()
-            .map([](auto sz) { return hai::cstr{sz}; })
-            .fmap([&](auto &&buf) {
-              return f.read(buf.data(), buf.size()).map([&] {
-                return traits::move(buf);
-              });
-            });
-      });
-}
-static int preprocess_file(const hai::cstr &buf) {
+int main() try {
+  auto buf = jojo::read_cstr("tests/example.cpp");
   auto tokens = phase_4(phase_3(phase_2(phase_1(buf))));
 
   for (auto t : tokens) {
     // printf("%3d %5d %5d\n", t.type, t.begin, t.end);
-    printf("[%.*s]", (t.end - t.begin + 1), buf.begin() + t.begin);
+    putf("[%.*s]", (t.end - t.begin + 1), buf.begin() + t.begin);
   }
-  return 0;
-}
-
-static int print_error(const char *err) {
-  fprintf(stderr, "%s", err);
+} catch (...) {
   return 1;
-}
-// }}}
-
-int main() {
-  return slurp("tests/example.cpp") //
-      .map(preprocess_file)
-      .take(print_error);
 }
