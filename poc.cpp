@@ -1,6 +1,7 @@
 #pragma leco tool
 import hai;
 import jojo;
+import jute;
 import missingno;
 import print;
 import traits;
@@ -23,6 +24,8 @@ struct token {
   token_type type;
   unsigned begin;
   unsigned end;
+  unsigned line;
+  unsigned column;
 };
 
 // {{{ Token Stream
@@ -410,12 +413,13 @@ static hai::varray<token> phase_4(const hai::varray<token> &t) {
 // }}}
 
 int main() try {
-  auto buf = jojo::read_cstr("tests/example.cpp");
+  jute::view fn = "tests/example.cpp";
+  auto buf = jojo::read_cstr(fn);
   auto tokens = phase_4(phase_3(phase_2(phase_1(buf))));
 
   for (auto t : tokens) {
-    // printf("%3d %5d %5d\n", t.type, t.begin, t.end);
-    putf("[%.*s]", (t.end - t.begin + 1), buf.begin() + t.begin);
+    put(fn, ':', t.line, ':', t.column, ": ");
+    putfn("[%.*s]", (t.end - t.begin + 1), buf.begin() + t.begin);
   }
 } catch (...) {
   return 1;
