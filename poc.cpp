@@ -70,24 +70,32 @@ public:
 // {{{ Phase 1
 static hai::varray<token> phase_1(const hai::cstr &file) {
   hai::varray<token> res{file.size()};
+  unsigned line = 1;
+  unsigned column = 1;
   for (auto i = 0U; i < file.size(); i++) {
     switch (auto c = file.data()[i]) {
     case 0xd:
-      if (file.data()[i + 1] == 0xa) {
-        res.push_back(token{.type = t_new_line, .begin = i, .end = i + 1});
-        i++;
-      } else {
-        res.push_back(token{.type = t_new_line, .begin = i, .end = i});
-      }
+      if (file.data()[i + 1] == 0xa) i++;
+      res.push_back(token {
+          .type = t_new_line,
+          .begin = i, .end = i,
+          .line = line, .column = column });
+      line++;
+      column = 1;
       break;
     default:
       // TODO: form translation charset elements
       // https://en.cppreference.com/w/cpp/language/charset#Translation_character_set
       res.push_back(token{
           .type = static_cast<token_type>(c),
-          .begin = i,
-          .end = i,
-      });
+          .begin = i, .end = i,
+          .line = line, .column = column });
+      if (c == 0xa) {
+        line++;
+        column = 1;
+      } else {
+        column++;
+      }
     }
   }
   return res;
@@ -131,6 +139,8 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
         .type = t_new_line,
         .begin = last.end + 1,
         .end = last.end + 1,
+        .line = last.line,
+        .column = last.column,
     });
   }
   return res;
@@ -170,6 +180,12 @@ static token ud_suffix(token_stream &str, const token &t) {
   }
   return t;
 }
+static token merge(token_type type, token t, token nt) {
+  return token {
+    .type = type,
+    .begin = t.begin, .end = nt.end,
+    .line = t.line, .column = t.column };
+}
 // }}}
 
 static token comment(token_stream &str, const token &t) { // {{{
@@ -190,21 +206,21 @@ static token comment(token_stream &str, const token &t) { // {{{
   } else {
     return t;
   }
-  return token{.type = t_space, .begin = t.begin, .end = nt.end};
+  return merge(t_space, t, nt);
 } // }}}
 static token identifier(token_stream &str, const token &t) { // {{{
   token nt = t;
   while (is_ident(str.peek())) {
     nt = str.take();
   }
-  return token{.type = t_identifier, .begin = t.begin, .end = nt.end};
+  return merge(t_identifier, t, nt);
 } //}}}
 static token non_nl_space(token_stream &str, const token &t) { // {{{
   token nt = t;
   while (is_non_nl_space(str.peek())) {
     nt = str.take();
   }
-  return token{.type = t_space, .begin = t.begin, .end = nt.end};
+  return merge(t_space, t, nt);
 } // }}}
 static token char_literal(token_stream &str, const token &t) { // {{{
   token nt = str.take();
@@ -212,7 +228,7 @@ static token char_literal(token_stream &str, const token &t) { // {{{
     nt = str.take();
   }
   nt = ud_suffix(str, nt);
-  return token{.type = t_char, .begin = t.begin, .end = nt.end};
+  return merge(t_char, t, nt);
 } // }}}
 static token str_literal(token_stream &str, const token &t) { // {{{
   token nt = str.take();
@@ -220,7 +236,7 @@ static token str_literal(token_stream &str, const token &t) { // {{{
     nt = str.take();
   }
   nt = ud_suffix(str, nt);
-  return token{.type = t_str, .begin = t.begin, .end = nt.end};
+  return merge(t_str, t, nt);
 } // }}}
 static token raw_str_literal(token_stream &str, const token &t) { // {{{
   token nt = str.take();
@@ -233,7 +249,7 @@ static token raw_str_literal(token_stream &str, const token &t) { // {{{
 
   nt = str.take(); // takes "
   nt = ud_suffix(str, nt);
-  return token{.type = t_raw_str, .begin = t.begin, .end = nt.end};
+  return merge(t_raw_str, t, nt);
 } // }}}
 static token pp_number(token_stream &str, const token &t) { // {{{
   token nt = t;
@@ -263,7 +279,7 @@ static token pp_number(token_stream &str, const token &t) { // {{{
 
     break;
   }
-  return token{.type = t_pp_number, .begin = t.begin, .end = nt.end};
+  return merge(t_pp_number, t, nt);
 } // }}}
 
 static hai::varray<token> phase_3(const hai::varray<token> &t) {
