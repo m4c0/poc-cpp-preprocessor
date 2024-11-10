@@ -7,7 +7,6 @@ import print;
 import traits;
 
 enum token_type : int {
-  t_export = -10,
   t_module = -9,
   t_import = -8,
   t_pp_number = -7,
@@ -286,13 +285,6 @@ static hai::varray<token> phase_3(const hai::varray<token> &t) {
   hai::varray<token> res{t.size()};
   token_stream str{t};
   while (str.has_more()) {
-    if (str.matches("export")) {
-      token t = str.peek();
-      t.type = t_export;
-      t.end = t.begin + 5;
-      str.skip(6);
-      res.push_back(t);
-    }
     if (str.matches("import")) {
       token t = str.peek();
       t.type = t_import;
