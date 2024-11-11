@@ -29,16 +29,16 @@ struct token {
 
 // {{{ Token Stream
 class token_stream {
-  const hai::varray<token> &m_tokens;
+  const hai::chain<token> & m_tokens;
   unsigned offset{};
 
   token eof() const {
-    const auto &last = m_tokens[m_tokens.size() - 1];
+    const auto &last = m_tokens.seek(m_tokens.size() - 1);
     return token{.type = t_eof, .begin = last.end + 1, .end = last.end + 1};
   }
 
 public:
-  explicit token_stream(const hai::varray<token> &t) : m_tokens(t) {}
+  explicit token_stream(const hai::chain<token> & t) : m_tokens(t) {}
 
   bool has_more() { return offset < m_tokens.size(); }
 
@@ -46,14 +46,12 @@ public:
     offset = (offset + n >= m_tokens.size()) ? m_tokens.size() : offset + n;
   }
   [[nodiscard]] token take() {
-    if (offset >= m_tokens.size())
-      return eof();
-    return m_tokens[offset++];
+    if (offset >= m_tokens.size()) return eof();
+    return m_tokens.seek(offset++);
   }
   [[nodiscard]] token peek(unsigned d = 0) const {
-    if (offset + d >= m_tokens.size())
-      return eof();
-    return m_tokens[offset + d];
+    if (offset + d >= m_tokens.size()) return eof();
+    return m_tokens.seek(offset + d);
   }
 
   [[nodiscard]] bool matches(const char *txt) const {
@@ -67,8 +65,8 @@ public:
 // }}}
 
 // {{{ Phase 1
-static hai::varray<token> phase_1(const hai::cstr &file) {
-  hai::varray<token> res{file.size()};
+static auto phase_1(const hai::cstr &file) {
+  hai::chain<token> res { file.size() };
   unsigned line = 1;
   unsigned column = 1;
   for (auto i = 0U; i < file.size(); i++) {
@@ -102,8 +100,8 @@ static hai::varray<token> phase_1(const hai::cstr &file) {
 // }}}
 
 // {{{ Phase 2
-static hai::varray<token> phase_2(const hai::varray<token> &t) {
-  hai::varray<token> res{t.size()};
+static auto phase_2(const hai::chain<token> & t) {
+  hai::chain<token> res { t.size() };
   token_stream str{t};
 
   if (str.peek(0).type == 0xFE && str.peek(1).type == 0xFF) {
@@ -132,8 +130,8 @@ static hai::varray<token> phase_2(const hai::varray<token> &t) {
     }
   }
 
-  if (res.size() > 0 && res[res.size() - 1].type != t_new_line) {
-    const auto &last = res[res.size() - 1];
+  if (res.size() > 0 && res.seek(res.size() - 1).type != t_new_line) {
+    const auto &last = res.seek(res.size() - 1);
     res.push_back(token{
         .type = t_new_line,
         .begin = last.end + 1,
@@ -281,8 +279,8 @@ static token pp_number(token_stream &str, const token &t) { // {{{
   return merge(t_pp_number, t, nt);
 } // }}}
 
-static hai::varray<token> phase_3(const hai::varray<token> &t) {
-  hai::varray<token> res{t.size()};
+static auto phase_3(const hai::chain<token> &t) {
+  hai::chain<token> res{ t.size() };
   token_stream str{t};
   while (str.has_more()) {
     if (str.matches("import")) {
@@ -385,8 +383,8 @@ static void consume_space(token_stream &str) {
   }
 }
 
-static hai::varray<token> phase_4(const hai::varray<token> &t) {
-  hai::varray<token> res{t.size()};
+static auto phase_4(const hai::chain<token> & t) {
+  hai::chain<token> res { t.size() };
   token_stream str{t};
   while (str.has_more()) {
     consume_space(str);
