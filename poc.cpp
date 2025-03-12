@@ -2,9 +2,7 @@
 import hai;
 import jojo;
 import jute;
-import missingno;
 import print;
-import traits;
 
 enum token_type : int {
   t_module = -9,
